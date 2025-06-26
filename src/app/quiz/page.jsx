@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function QuizPage() {
   const [questions, setQuestions] = useState([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState('');
   const [score, setScore] = useState(0);
-  const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -19,7 +20,6 @@ export default function QuizPage() {
     setIndex(0);
     setScore(0);
     setSelected('');
-    setDone(false);
     setLoading(false);
   };
 
@@ -29,42 +29,21 @@ export default function QuizPage() {
 
   const handleAnswer = (answer) => {
     const correct = questions[index].correct_answer;
-    if (answer === correct) setScore(score + 1);
+    if (answer === correct) setScore(prev => prev + 1);
     setSelected(answer);
 
     setTimeout(() => {
       if (index + 1 < questions.length) {
-        setIndex(index + 1);
+        setIndex(prev => prev + 1);
         setSelected('');
       } else {
-        setDone(true);
+        router.push(`/result?score=${score + (answer === correct ? 1 : 0)}&total=${questions.length}`);
       }
     }, 1000);
   };
 
   if (loading || questions.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-pink-200 text-xl">
-        Henter spørgsmål...
-      </div>
-    );
-  }
-
-  if (done) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-green-100 text-center p-6">
-        <h2 className="text-3xl font-bold text-green-700 mb-4">Resultat 🎉</h2>
-        <p className="text-lg mb-6">
-          Du fik <strong>{score}</strong> ud af <strong>{questions.length}</strong> rigtige!
-        </p>
-        <button
-          onClick={fetchQuestions}
-          className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
-        >
-          Prøv en ny quiz
-        </button>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-pink-200 text-xl">Henter spørgsmål...</div>;
   }
 
   const current = questions[index];
@@ -73,10 +52,7 @@ export default function QuizPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-blue-300 text-center px-4 py-8">
       <div className="max-w-xl w-full bg-blue-50 shadow rounded-lg p-6">
-        <h2
-          className="text-xl font-semibold text-blue-800 mb-6"
-          dangerouslySetInnerHTML={{ __html: current.question }}
-        />
+        <h2 className="text-xl font-semibold text-blue-800 mb-6" dangerouslySetInnerHTML={{ __html: current.question }} />
         <div className="grid gap-3">
           {answers.map((a) => (
             <button
